@@ -3,11 +3,13 @@ extern crate clap;
 extern crate time;
 extern crate filebuffer;
 
-mod tokenz;
+mod tokenizer_loop;
+mod tokenizer_peek;
 
 use clap::{Arg, App};
 use time::PreciseTime;
-use tokenz::*;
+use tokenizer_loop::*;
+use tokenizer_peek::*;
 
 fn main() {
       let matches = App::new("Nlp")
@@ -25,23 +27,16 @@ fn main() {
 
       
       // Start timer
-      let start = PreciseTime::now();
-      
-      // Main iteration
-      //
-      
-      //let buffer = words(bytes);
-      
+      let start1 = PreciseTime::now();
       bytes.tokenize();
+      let end1 = PreciseTime::now();
       
-      /* Last bytes in the buffer we turn into token
-      if buffer.len() > 0 { 
-            println!("{:?}", String::from_utf8(buffer).unwrap());
-      }*/
-      // Stop timer
-      let end = PreciseTime::now();
+      let start2 = PreciseTime::now();
+      words(bytes);
+      let end2 = PreciseTime::now();
       
-      println!("{} seconds.", start.to(end));
+      println!("{} for tokenizer_peek", start1.to(end1));
+      println!("{} for tokenizer_loop", start2.to(end2));
 
 } 
 
