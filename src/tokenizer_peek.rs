@@ -11,9 +11,14 @@ pub struct Token {
 
 #[derive(Debug, PartialEq)]
 pub enum Kind {
-      Word
-      //Number,
-      //Reference
+      Stop,             // Alphanumerical strings with additional . , : ; ? !
+      Alpha,            // Pure alpha string
+      Other,            // Unidentified elements
+      Hyphen,           // Alpha string ending with hyphen-minus -
+      Bracket,          // Alphanumeric strings containing one or more < [ ( " ' `
+      Numeric,          // Pure numeric strings 123
+      NonAlphaNum       // Strings with only | ¦ § _ ~ ^
+      
 }
 
 pub trait Tokenizer {
@@ -36,9 +41,16 @@ impl Tokenizer for Vec<u8> {
                                           .into_iter()
                                           .collect();    
                                     
-                                    let token = Token {object: Kind::Word, content: object};
+                                    // Parse kind
+                                    let kind = match object_type(object.clone()) {
+                                          Some(kind) => kind,
+                                          _ => Kind::Other
+                                    };
                                     
-                                    //println!("{:?}", token);
+                                    // Create token
+                                    let token = Token {object: kind, content: object};
+                                    
+                                    println!("{:?}", token);
                                     tokens.push( token );
                                     it.next().unwrap();
                               
@@ -56,6 +68,23 @@ fn not_eow(byte: u8) -> bool {
             32u8 | 10u8 | 13u8 => {false}
             _ => {true}
       }
+}
+
+fn object_type(mut object: Vec<u8>) -> Option<Kind> {
+      let mut result: Kind;
+      
+      match object.pop() {
+            Some(byte) => {
+                  match byte {
+                        44u8 | 46u8 | 33u8 | 59u8 | 58u8 | 63u8 => result = Kind::Stop,
+                        45u8 => result = Kind::Hyphen,
+                        _ => result = Kind::Other
+                  }
+            },
+            None => result = Kind::Other
+      }
+      
+      Some(result)
 }
 
 

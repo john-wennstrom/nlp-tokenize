@@ -25,7 +25,7 @@ fn main() {
       
       let bytes = data.to_vec();
 
-      // Use Tokenizer_loop
+      // Use Tokenizer_peek
       let start = PreciseTime::now();
       let tokens = bytes.tokenize();
       let end = PreciseTime::now();
@@ -36,7 +36,8 @@ fn main() {
             Err(e) => println!("{:?}", e),
       }
       
-      // Use Tokenizer_peek
+      // Use Tokenizer_loop
+      /*
       let start = PreciseTime::now();
       let tokens = words(bytes);
       let end = PreciseTime::now();
@@ -45,6 +46,6 @@ fn main() {
       match tokens {
             Ok(s) => println!("Tokenized {} objects in {} ms, {} objects/S", s.len(), ms, s.len() as i64 / ms * 1000),
             Err(e) => println!("{:?}", e),
-      }
+      }*/
 } 
 
