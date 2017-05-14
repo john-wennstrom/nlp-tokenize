@@ -7,7 +7,7 @@ mod tokenizer_loop;
 mod tokenizer_peek;
 
 use clap::{Arg, App};
-use time::PreciseTime;
+use time::{PreciseTime, Duration};
 use tokenizer_loop::*;
 use tokenizer_peek::*;
 
@@ -25,18 +25,26 @@ fn main() {
       
       let bytes = data.to_vec();
 
+      // Use Tokenizer_loop
+      let start = PreciseTime::now();
+      let tokens = bytes.tokenize();
+      let end = PreciseTime::now();
+      let ms = start.to(end).num_milliseconds();
       
-      // Start timer
-      let start1 = PreciseTime::now();
-      bytes.tokenize();
-      let end1 = PreciseTime::now();
+      match tokens {
+            Ok(s) => println!("Tokenized {} objects in {} ms, {} objects/s", s.len(), ms, s.len() as i64 / ms * 1000 ),
+            Err(e) => println!("{:?}", e),
+      }
       
-      let start2 = PreciseTime::now();
-      words(bytes);
-      let end2 = PreciseTime::now();
+      // Use Tokenizer_peek
+      let start = PreciseTime::now();
+      let tokens = words(bytes);
+      let end = PreciseTime::now();
+      let ms = start.to(end).num_milliseconds();
       
-      println!("{} for tokenizer_peek", start1.to(end1));
-      println!("{} for tokenizer_loop", start2.to(end2));
-
+      match tokens {
+            Ok(s) => println!("Tokenized {} objects in {} ms, {} objects/S", s.len(), ms, s.len() as i64 / ms * 1000),
+            Err(e) => println!("{:?}", e),
+      }
 } 
 
