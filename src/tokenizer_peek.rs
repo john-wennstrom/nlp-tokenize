@@ -3,19 +3,21 @@ use std::slice::Iter;
 
 #[derive(Debug, PartialEq)]
 pub struct Token {
-      object: Kind,
+      object: Vec<Kind>,
       content: Vec<u8>,
+      stop: bool,
       //length: usize,
       //index: usize,
 }
 
 #[derive(Debug, PartialEq)]
 pub enum Kind {
-      Stop,             // Alphanumerical strings with additional . , : ; ? !
+      Stop,             // Alphanumerical strings which ends with . , : ; ? !
       Alpha,            // Pure alpha string
       Other,            // Unidentified elements
       Hyphen,           // Alpha string ending with hyphen-minus -
-      Bracket,          // Alphanumeric strings containing one or more < [ ( " ' `
+      Bracket,          // Alphanumeric strings containing one or more < [ (
+      Quotation,        // Quotation marks "
       Numeric,          // Pure numeric strings 123
       NonAlphaNum       // Strings with only | ¦ § _ ~ ^
       
@@ -42,13 +44,10 @@ impl Tokenizer for Vec<u8> {
                                           .collect();    
                                     
                                     // Parse kind
-                                    let kind = match object_type(object.clone()) {
-                                          Some(kind) => kind,
-                                          _ => Kind::Other
-                                    };
+                                    let kind = get_object(object.clone());
                                     
                                     // Create token
-                                    let token = Token {object: kind, content: object};
+                                    let token = Token {object: kind, content: object, stop: false};
                                     
                                     println!("{:?}", token);
                                     tokens.push( token );
@@ -70,18 +69,57 @@ fn not_eow(byte: u8) -> bool {
       }
 }
 
+
+fn get_object(c: Vec<u8>) -> Vec<Kind> {
+
+      let mut result: Vec<Kind> = vec![];
+      
+      for (i, byte) in c.iter().enumerate() {
+            match *byte {
+                  34 => {
+                        result.push(Kind::Quotation);
+                        break; 
+                        },
+                  40 | 41 | 60 | 62 | 91 | 93 | 123 | 125 => {
+                        result.push(Kind::Bracket);
+                        break;
+                        },
+                  _ => {}
+            }
+      }
+      //print!("{:?}", j);
+      result
+}
+
+// Should return Result<Option, None>
+//
 fn object_type(mut object: Vec<u8>) -> Option<Kind> {
       let mut result: Kind;
       
-      match object.pop() {
+      // Match Stop and Hyphen
+      match object.clone().pop() {
             Some(byte) => {
                   match byte {
+                        
+                        // ,     .      !      ;      :      ?   
                         44u8 | 46u8 | 33u8 | 59u8 | 58u8 | 63u8 => result = Kind::Stop,
+                        
+                        // -
                         45u8 => result = Kind::Hyphen,
                         _ => result = Kind::Other
                   }
             },
             None => result = Kind::Other
+      }
+      
+      if result == Kind::Other {
+            for byte in object {
+                  match byte {
+                        34u8 => result = Kind::Quotation,
+                        40u8 | 41u8 | 60u8 | 62u8 | 91u8 | 93u8 | 123u8 | 125u8 => result = Kind::Bracket,
+                        _ => result = Kind::Other
+                  }
+            }
       }
       
       Some(result)
