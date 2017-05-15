@@ -1,16 +1,16 @@
+use std::collections::HashSet;
 use std::iter::{Iterator, Peekable};
 use std::slice::Iter;
 
 #[derive(Debug, PartialEq)]
 pub struct Token {
-      object: Vec<Kind>,
+      object: HashSet<Kind>,  // Stores all kinds
       content: Vec<u8>,
-      stop: bool,
       //length: usize,
       //index: usize,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq, Hash)]
 pub enum Kind {
       Stop,             // Alphanumerical strings which ends with . , : ; ? !
       Alpha,            // Pure alpha string
@@ -47,7 +47,7 @@ impl Tokenizer for Vec<u8> {
                                     let kind = get_object(object.clone());
                                     
                                     // Create token
-                                    let token = Token {object: kind, content: object, stop: false};
+                                    let token = Token {object: kind, content: object};
                                     
                                     println!("{:?}", token);
                                     tokens.push( token );
@@ -70,29 +70,26 @@ fn not_eow(byte: u8) -> bool {
 }
 
 
-fn get_object(c: Vec<u8>) -> Vec<Kind> {
+fn get_object(c: Vec<u8>) -> HashSet<Kind> {
 
-      let mut result: Vec<Kind> = vec![];
+      let mut result: HashSet<Kind> = HashSet::new();
+      let length = c.len();
       
       for (i, byte) in c.iter().enumerate() {
             match *byte {
-                  34 => {
-                        result.push(Kind::Quotation);
-                        break; 
-                        },
-                  40 | 41 | 60 | 62 | 91 | 93 | 123 | 125 => {
-                        result.push(Kind::Bracket);
-                        break;
-                        },
-                  _ => {}
+                  34                                        => { result.insert(Kind::Quotation); },
+                  45                                        => { result.insert(Kind::Hyphen); },
+                  40 | 41 | 60 | 62 | 91 | 93 | 123 | 125   => { result.insert(Kind::Bracket); },
+                  44 | 46 | 33 | 59 | 58 | 63               => { result.insert(Kind::Stop); },
+                  _                                         => {}
             }
       }
       //print!("{:?}", j);
       result
 }
 
-// Should return Result<Option, None>
-//
+
+/*
 fn object_type(mut object: Vec<u8>) -> Option<Kind> {
       let mut result: Kind;
       
@@ -123,7 +120,7 @@ fn object_type(mut object: Vec<u8>) -> Option<Kind> {
       }
       
       Some(result)
-}
+}*/
 
 
 fn consume_while<F>(it: &mut Peekable<Iter<u8>>, condition: F) -> Vec<u8>
