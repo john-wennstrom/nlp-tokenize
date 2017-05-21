@@ -4,6 +4,7 @@ name = "nlp"
 version = "0.1.0"
 
 [dependencies]
+bitflags = "0.9.0"
 clap = "2.24.1"
 filebuffer = "0.1.1"
 fst = "0.1.38"

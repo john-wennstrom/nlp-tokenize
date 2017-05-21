@@ -49,7 +49,7 @@ impl Tokenizer for Vec<u8> {
                                     // Create token
                                     let token = Token {object: kind, content: object};
                                     
-                                    println!("{:?}", token);
+                                    //println!("{:?}", token);
                                     tokens.push( token );
                                     it.next().unwrap();
                               
@@ -68,7 +68,6 @@ fn not_eow(byte: u8) -> bool {
             _ => {true}
       }
 }
-
 
 fn get_object(c: Vec<u8>) -> HashSet<Kind> {
 

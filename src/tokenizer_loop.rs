@@ -1,78 +1,87 @@
+use bitflags::*;
+
 #[derive(Debug, PartialEq)]
 pub struct Token {
-      data: Vec<u8>,
-      length: usize,
       index: usize,
+      flags: Flags,
+      data: Vec<u8>
+}
+
+bitflags! {
+      #[derive(Default)]
+      pub struct Flags: u32 {
+            const CONTROL     = 0b00000001;
+            const SPECIAL     = 0b00000010;
+            const NUMBER      = 0b00000100;
+            const ALPHA       = 0b00001000;
+            const LATIN       = 0b00010000;
+      }
+}
+
+impl Flags {
+    pub fn clear(&mut self) {
+        self.bits = 0;
+    }
 }
 
 pub fn words(bytes: Vec<u8>) -> Result<Vec<Token>, &'static Vec<u8>> {
 
-      //let mut hyphen: bool = false;
-      let mut i: usize = 0;
-      const MAX_BYTES: usize = 128;
-      let mut buffer: Vec<u8> = Vec::with_capacity(MAX_BYTES);
-      let mut tokens: Vec<Token> = vec![];
+      const MAX_BYTES: usize        = 8;
+      let mut i: usize              = 0;
+      let mut buffer: Vec<u8>       = Vec::with_capacity(MAX_BYTES);
+      let mut tokens: Vec<Token>    = vec![];
+      let mut parse_flags: Flags    = Default::default();
       
       for byte in bytes {
-            i = i + 1;
-            // Handle UTF-8 block 0-127
-            if byte <= 127 {
-                  match byte {
-                        // If byte is a space or newline
-                        32u8 | 10u8 | 13u8 => {
-                              // If buffer has no length, continue, else print 
-                              // it out and clear the buffer for next token
-                              let length = buffer.len();
-                              if length == 0 { continue; };
-                              
-                              /* create string
-                              let string: String = match String::from_utf8(buffer.clone()) {
-                                    Ok(s) => s,
-                                    Err(err) => {
-                                          //println!("Err: {:?}\n\n\n", err);
-                                          buffer.clear();
-                                          continue;
-                                    },
-                              };*/
-                              
-                              // create token
-                              let token = Token {
-                                    data: buffer.clone(),
-                                    length: length,
-                                    index: i
-                              };
-                              tokens.push( token );
-                              //println!("{:?}", token );
-                              buffer.clear();
-                        }
+            
+            if buffer.len() == MAX_BYTES { 
+                  buffer.reserve(MAX_BYTES); 
+            };
                         
-                        // If byte is a hyphen-minus
-                        45u8 => {
-                              
-                        }
+            match byte {
+                  32u8 | 10u8 | 13u8 => {
+                        if buffer.len() == 0 { continue; };
+                        i += 1;
                         
-                        _ => {
-                              // If we ran out of memory, allocate more, then 
-                              // push the byte to buffer
-                              if buffer.len() == MAX_BYTES { 
-                                    buffer.reserve(MAX_BYTES); 
-                              };
-                              buffer.push(byte);
-                              
-                        }
+                        let token = Token {
+                              index: i,
+                              flags: parse_flags,
+                              data: buffer.clone()
+                        };
+                        println!("{:?}", token );
+                        
+                        tokens.push( token );
+                        buffer.clear();
+                        parse_flags.clear();
+                        
+                  },
+                  1 ... 31    => { parse_flags = parse_flags | CONTROL;   buffer.push(byte);},
+                  32 ... 47   => { parse_flags = parse_flags | SPECIAL;   buffer.push(byte);},
+                  48 ... 57   => { parse_flags = parse_flags | NUMBER;    buffer.push(byte);},
+                  58 ... 64   => { parse_flags = parse_flags | SPECIAL;   buffer.push(byte);},
+                  65 ... 90   => { parse_flags = parse_flags | ALPHA;     buffer.push(byte);},
+                  91 ... 96   => { parse_flags = parse_flags | SPECIAL;   buffer.push(byte);},
+                  97 ... 122  => { parse_flags = parse_flags | ALPHA;     buffer.push(byte);},
+                  123 ... 126 => { parse_flags = parse_flags | SPECIAL;   buffer.push(byte);},
+                  127 ... 159 => { parse_flags = parse_flags | CONTROL;   buffer.push(byte);},
+                  160 ... 191 => { parse_flags = parse_flags | SPECIAL;   buffer.push(byte);},
+                  192 ... 255 => { parse_flags = parse_flags | LATIN;     buffer.push(byte);},
+                  _           => { 
+                        buffer.push(byte);
                   }
-            } 
-            // Handle UTF-8 block 128-255 Basic Latin
+            }
+  
+            /* Handle UTF-8 block 128-255 Basic Latin
             else {
                   let le = if byte < 192 {194} else {195};
                   let be = if byte < 192 {byte} else {byte - 64};
                   
                   buffer.push(le);
                   buffer.push(be);       
-            }
+            }*/
       }
       
-      if buffer.len() > 0 { 
+      /*if buffer.len() > 0 { 
             let token = Token {
                   data: buffer.clone(),
                   length: buffer.len(),
@@ -80,7 +89,7 @@ pub fn words(bytes: Vec<u8>) -> Result<Vec<Token>, &'static Vec<u8>> {
             };
             tokens.push( token );
             //println!("{:?}", String::from_utf8(buffer).unwrap());
-      }
+      }*/
       
       Ok( tokens )
 }
