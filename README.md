@@ -3,7 +3,7 @@ It tokenizes a text file by spaces and line breaks.
 It then categorizes the tokens using bitflags.
 
 The token has this format:
-```
+```rust
 struct Token {
    index: usize,
    flags: Flags,
