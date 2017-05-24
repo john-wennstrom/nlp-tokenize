@@ -1,6 +1,7 @@
 # nlp-tokenize
 It tokenizes a text file by spaces and line breaks.
 It then categorizes the tokens using bitflags.
+
 The token has this format:
 ```
 struct Token {
