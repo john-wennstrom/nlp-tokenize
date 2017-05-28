@@ -1,16 +1,20 @@
 #[macro_use]
 extern crate clap;
 extern crate time;
+extern crate encoding;
 extern crate bitflags;
 extern crate filebuffer;
+extern crate serde;
 
 mod tokenizer_loop;
 mod tokenizer_peek;
+mod numbers;
 
 use clap::{Arg, App};
 use time::{PreciseTime, Duration};
 use tokenizer_loop::*;
 use tokenizer_peek::*;
+use numbers::*;
 
 fn main() {
       let matches = App::new("Nlp")
@@ -41,7 +45,7 @@ fn main() {
       // Use Tokenizer_loop
       
       let start = PreciseTime::now();
-      let tokens = words(bytes);
+      let tokens = words( bytes, &to_number );
       let end = PreciseTime::now();
       let ms = start.to(end).num_milliseconds();
       
