@@ -1,11 +1,14 @@
 use bitflags::*;
 use std::borrow::Cow;
+use encoding::{Encoding, DecoderTrap};
+use encoding::all::UTF_8;
 
 #[derive(Debug, PartialEq)]
 pub struct Token {
-      index: usize,
-      flags: Flags,
-      data: String //Vec<u8>
+      pub index: usize,
+      pub flags: Flags,
+      pub bytes: Vec<u8>,
+      pub data: String
 }
 
 bitflags! {
@@ -30,7 +33,7 @@ impl Flags {
     }
 }
 
-pub fn words(bytes: Vec<u8>) -> Result<Vec<Token>, &'static Vec<u8>> {
+pub fn words(bytes: Vec<u8>, f: &Fn(&Token) -> i32) -> Result<Vec<Token>, &'static Vec<u8>> {
 
       const MAX_BYTES: usize        = 8;
       let mut i: usize              = 0;
@@ -53,9 +56,11 @@ pub fn words(bytes: Vec<u8>) -> Result<Vec<Token>, &'static Vec<u8>> {
                         let token = Token {
                               index: i,
                               flags: parse_flags,
+                              bytes: buffer.clone(),
                               data: as_string(buffer.clone())
                         };
-                        println!("{:?}", token );
+                        //println!("{}", as_string(buffer.clone()) );
+                        println!("{} {}", f(&token), token.data);
                         
                         tokens.push( token );
                         buffer.clear();
@@ -92,9 +97,10 @@ pub fn words(bytes: Vec<u8>) -> Result<Vec<Token>, &'static Vec<u8>> {
             let token = Token {
                   index: i + 1,
                   flags: parse_flags,
+                  bytes: buffer.clone(),
                   data: as_string(buffer.clone())
             };
-            println!("{:?}", token );
+            //println!("{:?}", token );
       }
       Ok( tokens )
 }
@@ -151,9 +157,9 @@ pub fn as_string(input: Vec<u8>) -> String {
                   buf.push(byte);
             }
       }
-      let result = unsafe {
-            String::from_utf8_unchecked(buf)
-      };
+      //let value = String::from_utf8(buf);     
       
-      result
+      String::from_utf8_lossy(&buf).into_owned()
+
+      
 }
